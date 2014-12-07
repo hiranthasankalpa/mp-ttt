@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,10 @@ public class TestServlet extends HttpServlet {
         list.add("item1");
         list.add("item2");
         list.add("item3");
+
+        //InputStream body = request.getInputStream();
+
+        list.add(request.getParameter("call"));
 
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(list);

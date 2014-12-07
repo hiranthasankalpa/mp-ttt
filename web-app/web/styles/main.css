@@ -1,3 +1,25 @@
 .message {
     font-size: 50px;
 }
+
+#board {
+    border: 2px solid  black;
+}
+
+#board td {
+    height: 150px;
+    width: 150px;
+    border: 2px solid  black;
+    background: url("/images/boxBG.JPG") repeat;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.o {
+    width: 140px;
+}
+
+.x {
+    width: 110px;
+}
