@@ -9,15 +9,25 @@ $(function() {
     draw(5, 'x');
     draw(6, 'o');
 
-    $(document).on('click', '.box', boxClicked)
+    $(document).on('click', '.box', boxClicked);
+    $(document).on('click', '#checkWinner', checkWinner);
+    $(document).on('click', '#startGame', startGame);
 
 });
+
+var startGame = function () {
+    $('#gamePrompt').modal('toggle');
+};
+
+var checkWinner = function () {
+
+};
 
 var boxClicked = function () {
     console.log(this.id);
 };
 
-draw = function (location, value) {
+var draw = function (location, value) {
     $('#'+location+' .common').hide();
     $('#'+location+' .'+value).show();
 };

@@ -1,9 +1,11 @@
-.message {
-    font-size: 50px;
+.content {
+    width: 100%;
+    text-align: center;
 }
 
 #board {
     border: 2px solid  black;
+    margin: 0 auto;
 }
 
 #board td {
@@ -11,8 +13,6 @@
     width: 150px;
     border: 2px solid  black;
     background: url("/images/boxBG.JPG") repeat;
-    font-size: 40px;
-    font-weight: bold;
     text-align: center;
 }
 
