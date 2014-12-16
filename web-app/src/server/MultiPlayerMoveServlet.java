@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet("/singlePlayerMove/*")
-public class SinglePlayerMoveServlet extends HttpServlet {
+@WebServlet("/multiPlayerMove/*")
+public class MultiPlayerMoveServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws javax.servlet.ServletException, IOException {
 
@@ -35,20 +35,8 @@ public class SinglePlayerMoveServlet extends HttpServlet {
         int isAPlayerWon = Util.isAPlayerWon(board);
         int freeCells = Util.getNoOfFreeCells(board);
 
-        int bestMove [];
-        if(isAPlayerWon == 0 && freeCells != 0) {
-            bestMove = GameTree.getBestMove(board);
-
-            board[bestMove[0]][bestMove[1]] = 1;
-            isAPlayerWon = Util.isAPlayerWon(board);
-            freeCells = Util.getNoOfFreeCells(board);
-        } else {
-            bestMove = new int[] {-1,-1};
-        }
-
         list.add(isAPlayerWon + "");
         list.add(freeCells + "");
-        list.add((bestMove[0]*3 + bestMove[1] + 1) + "");
 
         Gson gson = new GsonBuilder().create();
         String json = gson.toJson(list);

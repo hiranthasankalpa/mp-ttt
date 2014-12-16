@@ -40,7 +40,7 @@
 
 </div>
 
-<div class="modal fade" id="gamePrompt">
+<div class="modal fade" data-backdrop="static" data-keyboard="false" id="gamePrompt">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -49,7 +49,7 @@
             <div class="modal-body">
                 <div style="height: 115px">
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="singlePlayer" data-dismiss="modal">Single Player</button><br><br>
-                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="multiPlayer">Multi Player</button><br><br>
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="multiPlayer" data-dismiss="modal">Multi Player</button><br><br>
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="overNetwork">Over the Network</button><br><br>
                     <br><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" data-dismiss="modal">Close</button><br><br>
                 </div>
@@ -60,7 +60,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="gameState">
+<div class="modal fade" data-backdrop="static" data-keyboard="false" id="gameState">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -75,7 +75,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="playerPrompt">
+<div class="modal fade" data-backdrop="static" data-keyboard="false" id="playerPrompt">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-body">

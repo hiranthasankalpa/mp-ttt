@@ -1,8 +1,10 @@
-var service_url = 'http://localhost:8080/singlePlayerMove';
+var singlePlayerUrl = 'http://localhost:8080/singlePlayerMove';
+var multiPlayerUrl = 'http://localhost:8080/multiPlayerMove';
 
 board = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-
+gameType = '';
 myTurn = false;
+nowTrun = 0;
 
 $(function() {
     $('.common').hide();
@@ -10,6 +12,7 @@ $(function() {
     $(document).on('click', '.box', boxClicked);
     $(document).on('click', '.newGame', newGame);
     $(document).on('click', '#singlePlayer', startSinglePlayer);
+    $(document).on('click', '#multiPlayer', startMultiPlayer);
     $(document).on('click', '#iWill', iWill);
     $(document).on('click', '#letComputer', letComputer);
 
@@ -21,17 +24,79 @@ var boxClicked = function () {
     if(myTurn){
         myTurn = false;
         var box = this.id;
-        draw(box, 'x');
-        board[box-1] = -1;
+
+        if (gameType == "SinglePlayer") {
+            draw(box, 'x');
+            board[box-1] = -1;
+        } else if (gameType == "MultiPlayer") {
+            if (nowTrun == 1) {
+                draw(box, 'x');
+                board[box-1] = 1;
+                nowTrun = -1;
+            } else {
+                draw(box, 'o');
+                board[box-1] = -1;
+                nowTrun = 1;
+            }
+        }
 
         var boardStr = '';
         for(var i=0; i<9; i++){
             boardStr += board[i] + " ";
         }
-        singlePlayerMove(boardStr);
+        if (gameType == "SinglePlayer") {
+            singlePlayerMove(boardStr);
+        } else if (gameType == "MultiPlayer") {
+            multiPlayerMove(boardStr);
+        }
+
     } else {
         $('#gamePrompt').modal('toggle');
     }
+};
+
+var multiPlayerMove = function (boardStr) {
+    var request = $.ajax({
+        url: multiPlayerUrl,
+        type: "POST",
+        data: {
+            'board': boardStr
+        }
+    });
+
+    request.done(function (msg) {
+        var isAPlayerWon = msg[0];
+        var freeCells = msg[1];
+
+        if (isAPlayerWon != 0) {
+            if (isAPlayerWon == 1){
+                $('#gameStateText').text('"X" Won!');
+                $('#gameState').modal('toggle');
+            } else if (isAPlayerWon == -1) {
+                $('#gameStateText').text('"O" Won!');
+                $('#gameState').modal('toggle');
+            }
+            nowTrun = 0;
+        } else if (freeCells == 0) {
+            $('#gameStateText').text('Game Drawn!');
+            $('#gameState').modal('toggle');
+            nowTrun = 0;
+        } else {
+            myTurn = true;
+        }
+    });
+
+    request.fail(function (jqXHR, textStatus) {
+        alert("Oops, error occured!");
+        newGame();
+    });
+};
+
+var startMultiPlayer = function () {
+    gameType = "MultiPlayer";
+    resetBoard();
+    nowTrun = 1;
+    myTurn = true;
 };
 
 var resetBoard = function () {
@@ -44,6 +109,7 @@ var newGame = function () {
 };
 
 var startSinglePlayer = function () {
+    gameType = "SinglePlayer";
     resetBoard();
     $('#playerPrompt').modal('toggle');
 };
@@ -64,7 +130,7 @@ var letComputer = function () {
 
 var singlePlayerMove = function (boardStr) {
     var request = $.ajax({
-        url: service_url,
+        url: singlePlayerUrl,
         type: "POST",
         data: {
             'board': boardStr
@@ -81,14 +147,14 @@ var singlePlayerMove = function (boardStr) {
 
         if (isAPlayerWon != 0) {
             if (isAPlayerWon == 1){
-                $('#gameStateText').text('You Lost');
+                $('#gameStateText').text('You Lost!');
                 $('#gameState').modal('toggle');
             } else if (isAPlayerWon == -1) {
-                $('#gameStateText').text('You Won');
+                $('#gameStateText').text('You Won!');
                 $('#gameState').modal('toggle');
             }
         } else if (freeCells == 0) {
-            $('#gameStateText').text('Game Drawn');
+            $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
         } else {
             myTurn = true;
@@ -96,6 +162,8 @@ var singlePlayerMove = function (boardStr) {
     });
 
     request.fail(function (jqXHR, textStatus) {
+        alert("Oops, error occured!");
+        newGame();
     });
 };
 
