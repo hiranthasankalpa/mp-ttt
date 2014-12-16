@@ -1,8 +1,8 @@
-var singlePlayerUrl = 'http://localhost:8080/singlePlayerMove';
-var multiPlayerUrl = 'http://localhost:8080/multiPlayerMove';
+var singlePlayerUrl = 'singlePlayerMove';
+var multiPlayerUrl = 'multiPlayerMove';
 
 board = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-gameType = '';
+gameType = 'NotSet';
 myTurn = false;
 nowTrun = 0;
 
@@ -50,7 +50,7 @@ var boxClicked = function () {
             multiPlayerMove(boardStr);
         }
 
-    } else {
+    } else if (gameType == "NotSet") {
         $('#gamePrompt').modal('toggle');
     }
 };
@@ -77,10 +77,12 @@ var multiPlayerMove = function (boardStr) {
                 $('#gameState').modal('toggle');
             }
             nowTrun = 0;
+            gameType = 'NotSet';
         } else if (freeCells == 0) {
             $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
             nowTrun = 0;
+            gameType = 'NotSet';
         } else {
             myTurn = true;
         }
@@ -153,9 +155,11 @@ var singlePlayerMove = function (boardStr) {
                 $('#gameStateText').text('You Won!');
                 $('#gameState').modal('toggle');
             }
+            gameType = 'NotSet';
         } else if (freeCells == 0) {
             $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
+            gameType = 'NotSet';
         } else {
             myTurn = true;
         }
