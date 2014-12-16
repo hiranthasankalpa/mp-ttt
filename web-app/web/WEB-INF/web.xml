@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
     <servlet>
-        <servlet-name>TestServlet</servlet-name>
-        <servlet-class>server.TestServlet</servlet-class>
+        <servlet-name>SinglePlayerMoveServlet</servlet-name>
+        <servlet-class>server.SinglePlayerMoveServlet</servlet-class>
     </servlet>
 </web-app>

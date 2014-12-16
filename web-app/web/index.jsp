@@ -14,10 +14,11 @@
 <body>
 <div class="content">
 
-    <h1><%=MainServer.getMessage()%></h1>
+    <h1>Tic Tac Toe</h1>
 
-    <div class="col-xs-12"><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="checkWinner">Check Winner</button></div><br><br>
-    <div class="col-xs-12"><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="startGame">Start Game</button></div><br><br>
+    <%--<%=MainServer.getMessage()%>--%>
+
+    <div class="col-xs-12"><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4 newGame">New Game</button></div><br><br>
 
     <table id="board">
         <tr>
@@ -45,15 +46,43 @@
             <div class="modal-header">
                 <h4 class="modal-title">Select the type of game you want to start</h4>
             </div>
-            <div class="modal-body" id="modal-body">
+            <div class="modal-body">
                 <div style="height: 115px">
-                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="singlePlayer">Single Player</button><br><br>
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="singlePlayer" data-dismiss="modal">Single Player</button><br><br>
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="multiPlayer">Multi Player</button><br><br>
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="overNetwork">Over the Network</button><br><br>
+                    <br><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" data-dismiss="modal">Close</button><br><br>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="gameState">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="gameStateText"></h4>
+            </div>
+            <div class="modal-body">
+                <div style="height: 35px">
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4 newGame" data-dismiss="modal">New Game</button><br><br>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerPrompt">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div style="height: 75px">
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" data-dismiss="modal" id="iWill">I will start</button><br><br>
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" data-dismiss="modal" id="letComputer">Let the Computer start</button><br><br>
+                </div>
             </div>
         </div>
     </div>
