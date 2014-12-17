@@ -50,7 +50,7 @@
                 <div style="height: 115px">
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="singlePlayer" data-dismiss="modal">Single Player</button><br><br>
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="multiPlayer" data-dismiss="modal">Multi Player</button><br><br>
-                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="overNetwork">Over the Network</button><br><br>
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" id="onlinePlayer" data-dismiss="modal">Play Onlinek</button><br><br>
                     <br><button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4" data-dismiss="modal">Close</button><br><br>
                 </div>
             </div>

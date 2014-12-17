@@ -7,4 +7,16 @@
         <servlet-name>SinglePlayerMoveServlet</servlet-name>
         <servlet-class>server.SinglePlayerMoveServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>MultiPlayerMoveServlet</servlet-name>
+        <servlet-class>server.MultiPlayerMoveServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>OnlinePlayerMoveServlet</servlet-name>
+        <servlet-class>server.OnlinePlayerMoveServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>OnlinePlayerConectServlet</servlet-name>
+        <servlet-class>server.OnlinePlayerConnectServlet</servlet-class>
+    </servlet>
 </web-app>
