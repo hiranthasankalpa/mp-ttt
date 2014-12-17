@@ -58,6 +58,7 @@ public class GameTree {
         int winner = node.isAPlayerWon();
         if(winner != 0) {
             node.evaluationValue = winner ;
+            node.childs = null;
             return;
         }
         
@@ -80,6 +81,7 @@ public class GameTree {
             list.addLast(node);
         }
         
+        if(node.childs == null) return;
         for(Node n : node.childs) {
             getChildsAtLevel(n, level, list);
         }
@@ -91,11 +93,25 @@ public class GameTree {
         return list;
     }
     
-    private void setEvaluationValuesAtLeaves() {
-        LinkedList<Node> leaveList = getNodesAtLevel(maxLevels);
-        for(Node n : leaveList) {
-            n.setEvaluationValueAsALeave();
+    private void setEvaluationValuesAtLeaves(Node node) {
+        if(node.level == maxLevels) {
+            int winner = Util.isAPlayerWon(node.board);
+            node.evaluationValue = winner;
         }
+        if(node.childs == null) {
+            return;
+        }
+        for(Node n : node.childs) {
+            setEvaluationValuesAtLeaves(n);
+        }
+    }
+    
+    private void setEvaluationValuesAtLeaves() {
+//        LinkedList<Node> leaveList = getNodesAtLevel(maxLevels);
+//        for(Node n : leaveList) {
+//            n.setEvaluationValueAsALeave();
+//        }
+        setEvaluationValuesAtLeaves(root);
     }
     
     public int showBestSolutionBoard() {
@@ -142,20 +158,21 @@ public class GameTree {
     }
     
     public static int[] getBestMove(int board[][]) {
-        if((Util.getNoOfFreeCells(board) == 8 && board[1][1] == 0) || 
-                Util.getNoOfFreeCells(board) == 9) {
-            int ret[] = {1, 1};
-            return ret;
-        }
+//        if((Util.getNoOfFreeCells(board) == 8 && board[1][1] == 0) || 
+//                Util.getNoOfFreeCells(board) == 9) {
+//            int ret[] = {1, 1};
+//            return ret;
+//        }
         GameTree gameTree = new GameTree(board);
         int maxLevels = Util.getNoOfFreeCells(board);
         gameTree.createChilds(maxLevels);
         gameTree.setEvaluationValuesAtLeaves();
         gameTree.miniMax(gameTree.root, true);
+        //gameTree.showTree();
         
         int bestIndex = gameTree.showBestSolutionBoard();
         int move[] = Util.extractLastMove(board, gameTree.root.childs[bestIndex].board);
         return move;
     }
-
+    
 }
