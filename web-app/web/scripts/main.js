@@ -125,34 +125,44 @@ var boxClicked = function () {
         var boardStr = '';
 
         if (gameType == "SinglePlayer") {
-            draw(box, 'x');
-            board[box-1] = -1;
+            if (board[box-1] == 0) {
+                draw(box, 'x');
+                board[box-1] = -1;
 
-            for(var i=0; i<9; i++){
-                boardStr += board[i] + " ";
+                for(var i=0; i<9; i++){
+                    boardStr += board[i] + " ";
+                }
+
+                singlePlayerMove(boardStr);
+            } else {
+                myTurn = true;
             }
         } else if (gameType == "MultiPlayer") {
-            if (nowTrun == 1) {
-                draw(box, 'x');
-                board[box-1] = 1;
-                nowTrun = -1;
-            } else {
-                draw(box, 'o');
-                board[box-1] = -1;
-                nowTrun = 1;
-            }
+            if (board[box-1] == 0) {
+                if (nowTrun == 1) {
+                    draw(box, 'x');
+                    board[box-1] = 1;
+                    nowTrun = -1;
+                } else {
+                    draw(box, 'o');
+                    board[box-1] = -1;
+                    nowTrun = 1;
+                }
 
-            for(var i=0; i<9; i++){
-                boardStr += board[i] + " ";
+                for(var j=0; j<9; j++){
+                    boardStr += board[j] + " ";
+                }
+
+                multiPlayerMove(boardStr);
+            } else {
+                myTurn = true;
             }
         } else if (gameType == "Online") {
-            onlinePlayerMove(box);
-        }
-
-        if (gameType == "SinglePlayer") {
-            singlePlayerMove(boardStr);
-        } else if (gameType == "MultiPlayer") {
-            multiPlayerMove(boardStr);
+            if (board[box-1] == 0) {
+                onlinePlayerMove(box);
+            } else {
+                myTurn = true;
+            }
         }
 
     } else if (gameType == "NotSet") {
