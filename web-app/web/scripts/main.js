@@ -56,12 +56,12 @@ var onlinePlayerMove = function (move) {
         var board = msg[3];
 
         if (isAPlayerWon != 0) {
-            if (isAPlayerWon == 1){
-                $('#gameStateText').text('"X" Won!');
+            if (isAPlayerWon == player){
+                $('#gameStateText').text('You Won!');
                 $('#gameState').modal('toggle');
                 clearInterval(interval);
-            } else if (isAPlayerWon == -1) {
-                $('#gameStateText').text('"O" Won!');
+            } else {
+                $('#gameStateText').text('You Lost!');
                 $('#gameState').modal('toggle');
             }
             nowTrun = 0;
