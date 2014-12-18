@@ -1,17 +1,24 @@
 package gui;
 
 import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
+import java.util.Timer;
 import javax.swing.JTextField;
+import org.apache.http.NameValuePair;
 
-public class GameGUI extends javax.swing.JFrame implements Runnable{
+public class GameGUI extends javax.swing.JFrame {
 
     JTextField[][] boxes = new JTextField[3][3];
-    private boolean  visibility;
-    boolean isPossibleToMove;
+    boolean isPossibleToMoveSP;
+    boolean player1Chance;
     int board[][];
+    String mode;
+    int gameIDOP;
+    int playerOP;
+    int turnOP;
+    Timer timer;
     
     public GameGUI() {
-        visibility = false;
         initGUIConfigs();
         initComponents();
         boxes[0][0] = box00;
@@ -24,30 +31,52 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
         boxes[2][1] = box21;
         boxes[2][2] = box22;
         setButtonActions();
+        
         board = new int[3][3];
-        isPossibleToMove = true;
+        isPossibleToMoveSP = false;
+        player1Chance = true;
+        mode = "idle";
     }
-    
-    public void setVisibilityOfGUI(boolean visibility) {
-        this.visibility = visibility;
-        setVisible(visibility);
-    }
-    
+
     public void setMessageText(String text) {
         textMessage.setText(text);
     }
     
     public void resetGame() {
-        isPossibleToMove = true;
+        if(btnReset.getText().equals("Start Game")) {
+            btnReset.setText("Restart Game");
+        }
         board = new int[3][3];
         setBoard();
         setMessageText("");
         
-        if(!chkBoxStarting.isSelected()) {
-            isPossibleToMove = false;
-            board[1][1] = 1;
-            setBoard();
-            isPossibleToMove = true;
+        if(singlePlayer.isSelected()) {
+            mode = "singlePlayer";
+            if(!chkBoxStarting.isSelected()) {
+                isPossibleToMoveSP = false;
+                board[1][1] = 1;
+                setBoard();
+            }
+            isPossibleToMoveSP = true;
+        } else if(internet.isSelected()) {
+            mode = "internet";
+            isPossibleToMoveSP = false;
+            String reply = Util.sendPost(Util.connectURL, new ArrayList<NameValuePair>());
+            reply = reply.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll(",", " ").replaceAll("\"", "");
+            System.out.println(reply);
+            String parts[] = reply.split(" ");
+            gameIDOP = Integer.parseInt(parts[0]);
+            playerOP = Integer.parseInt(parts[1]);
+            turnOP = Integer.parseInt(parts[2]);
+            if(turnOP == 0) {
+                setMessageText("Waiting for another player...");
+            }
+            
+            setTimer(2);            
+        } else {
+            mode = "withFriend";
+            player1Chance = true;
+            setMessageText("Play 'X'");
         }
     }
     
@@ -65,7 +94,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
         }
     }
     
-    public void finishGame() {
+    public void finishGameSP() {
         int p = Util.isAPlayerWon(board);
         if(p > 0) {
             setMessageText("You lost");
@@ -78,15 +107,15 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
         }
     }
     
-    public void buttonAction(int r, int c) {        
-        if(isPossibleToMove) {
-            isPossibleToMove = false;
+    public void singlePlayer(int r, int c) {
+        if(isPossibleToMoveSP && board[r][c] == 0) {
+            isPossibleToMoveSP = false;
             board[r][c] = -1;
             setBoard();
             
             if(Util.isAPlayerWon(board) != 0  || Util.getNoOfFreeCells(board) == 0) {
-                isPossibleToMove = false;
-                finishGame();
+                isPossibleToMoveSP = false;
+                finishGameSP();
                 return;
             }
             int bestMove[] = GameTree.getBestMove(board);
@@ -94,13 +123,105 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
             int bestCol = bestMove[1];
             board[bestRow][bestCol] = 1;
             setBoard();
-            isPossibleToMove = true;
+            isPossibleToMoveSP = true;
             if(Util.isAPlayerWon(board) != 0  || Util.getNoOfFreeCells(board) == 0) {
-                isPossibleToMove = false;
-                finishGame();
+                isPossibleToMoveSP = false;
+                finishGameSP();
                 return;
             }
         }
+    }
+    
+    public void withFriend(int r, int c) {
+        if(board[r][c] != 0) return;
+        
+        if(Util.isAPlayerWon(board) != 0  || Util.getNoOfFreeCells(board) == 0) {
+            return;
+        }
+        
+        int currPlayer = player1Chance ? 1 : -1;
+        player1Chance = !player1Chance;
+        if(player1Chance) setMessageText("Play 'X'");
+        else              setMessageText("Play 'O'");
+        board[r][c] = currPlayer;
+        setBoard();
+        if(Util.isAPlayerWon(board) != 0  || Util.getNoOfFreeCells(board) == 0) {
+            int p = Util.isAPlayerWon(board);
+            if(p > 0) {
+                setMessageText("Player 1 won");
+            }
+            else if(p == 0) {
+                setMessageText("Game drawn");
+            }
+            else {
+                setMessageText("Player 2 won");
+            }
+            return;
+        }
+    }
+    
+    public void onlinePlay(int r, int c) {
+        checkStatusOfGameOP();
+        //dummy call
+        makeMove(-1, -1);
+        if(turnOP != playerOP) {
+            return;
+        }
+        
+        makeMove(r, c);
+        checkStatusOfGameOP();
+    }
+    
+    public void checkStatusOfGameOP() {
+        if(Util.isAPlayerWon(board) != 0) {
+            turnOP = 0;
+            cancleTimer();
+            if(Util.isAPlayerWon(board) == playerOP) {
+                setMessageText("You won");
+            } else {
+                setMessageText("You lost");
+            }
+        } else if(Util.getNoOfFreeCells(board) == 0) {
+            turnOP = 0;
+            cancleTimer();
+            setMessageText("Game drawn");
+        }
+    }
+    
+    public void makeMove(int r, int c) {
+        String reply = Util.sendOnlineMove(r, c, playerOP, gameIDOP);
+        reply = reply.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll(",", " ").replaceAll("\"", "");
+        String parts[] = reply.split(" ");
+        turnOP = Integer.parseInt(parts[2]);
+        for(int i = 0; i < 3; ++i) {
+            for(int j = 0; j < 3; ++j) {
+                board[i][j] = Integer.parseInt(parts[3 + 3 * i + j]);
+            }
+        }
+        setBoard();
+    }
+    
+    public void buttonAction(int r, int c) {
+        if(mode.equals("singlePlayer")) {
+            singlePlayer(r, c);
+        }
+        else if(mode.equals("internet")) {
+            onlinePlay(r, c);
+        }
+        else if(mode.equals("withFriend")) {
+            withFriend(r, c);
+        }
+    }
+    
+    public void setTimer(int seconds) {
+        PollingTimer poller = new PollingTimer(this);
+//        poller.setValues(playerOP, gameIDOP, seconds);
+        timer = new Timer();
+        timer.schedule(poller, seconds * 1000, seconds * 1000);
+    }
+    
+    public void cancleTimer() {
+        timer.cancel();
     }
 
     private void setButtonActions() {
@@ -160,26 +281,31 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        box00 = new JTextField();
-        box01 = new JTextField();
-        box02 = new JTextField();
-        box10 = new JTextField();
-        box11 = new JTextField();
-        box12 = new JTextField();
-        box20 = new JTextField();
-        box21 = new JTextField();
-        box22 = new JTextField();
-        textMessage = new JTextField();
+        buttonGroup1 = new javax.swing.ButtonGroup();
+        box00 = new javax.swing.JTextField();
+        box01 = new javax.swing.JTextField();
+        box02 = new javax.swing.JTextField();
+        box10 = new javax.swing.JTextField();
+        box11 = new javax.swing.JTextField();
+        box12 = new javax.swing.JTextField();
+        box20 = new javax.swing.JTextField();
+        box21 = new javax.swing.JTextField();
+        box22 = new javax.swing.JTextField();
+        textMessage = new javax.swing.JTextField();
         btnExit = new javax.swing.JButton();
         btnReset = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         chkBoxStarting = new javax.swing.JCheckBox();
+        singlePlayer = new javax.swing.JRadioButton();
+        withFriend = new javax.swing.JRadioButton();
+        internet = new javax.swing.JRadioButton();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         box00.setEditable(false);
         box00.setFont(new java.awt.Font("Dialog", 0, 48));
-        box00.setHorizontalAlignment(JTextField.CENTER);
+        box00.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box00.setToolTipText("");
         box00.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -189,7 +315,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box01.setEditable(false);
         box01.setFont(new java.awt.Font("Dialog", 0, 48));
-        box01.setHorizontalAlignment(JTextField.CENTER);
+        box01.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box01.setToolTipText("");
         box01.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -199,7 +325,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box02.setEditable(false);
         box02.setFont(new java.awt.Font("Dialog", 0, 48));
-        box02.setHorizontalAlignment(JTextField.CENTER);
+        box02.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box02.setToolTipText("");
         box02.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -209,7 +335,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box10.setEditable(false);
         box10.setFont(new java.awt.Font("Dialog", 0, 48));
-        box10.setHorizontalAlignment(JTextField.CENTER);
+        box10.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box10.setToolTipText("");
         box10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -219,7 +345,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box11.setEditable(false);
         box11.setFont(new java.awt.Font("Dialog", 0, 48));
-        box11.setHorizontalAlignment(JTextField.CENTER);
+        box11.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box11.setToolTipText("");
         box11.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -229,7 +355,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box12.setEditable(false);
         box12.setFont(new java.awt.Font("Dialog", 0, 48));
-        box12.setHorizontalAlignment(JTextField.CENTER);
+        box12.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box12.setToolTipText("");
         box12.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -239,7 +365,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box20.setEditable(false);
         box20.setFont(new java.awt.Font("Dialog", 0, 48));
-        box20.setHorizontalAlignment(JTextField.CENTER);
+        box20.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box20.setToolTipText("");
         box20.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -249,7 +375,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box21.setEditable(false);
         box21.setFont(new java.awt.Font("Dialog", 0, 48));
-        box21.setHorizontalAlignment(JTextField.CENTER);
+        box21.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box21.setToolTipText("");
         box21.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -259,7 +385,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
 
         box22.setEditable(false);
         box22.setFont(new java.awt.Font("Dialog", 0, 48));
-        box22.setHorizontalAlignment(JTextField.CENTER);
+        box22.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         box22.setToolTipText("");
         box22.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -276,7 +402,7 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
             }
         });
 
-        btnReset.setText("Reset");
+        btnReset.setText("Start Game");
         btnReset.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnResetActionPerformed(evt);
@@ -286,21 +412,45 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
         chkBoxStarting.setSelected(true);
         chkBoxStarting.setText("I'm Starting Game ");
 
+        buttonGroup1.add(singlePlayer);
+        singlePlayer.setSelected(true);
+        singlePlayer.setText("Single Player");
+        singlePlayer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                singlePlayerActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(withFriend);
+        withFriend.setText("Play with a friend");
+        withFriend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                withFriendActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(internet);
+        internet.setText("Play in Internet");
+        internet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                internetActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("(Offline)");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(54, 54, 54)
-                .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 108, Short.MAX_VALUE)
-                .addComponent(btnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(53, 53, 53))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(65, 65, 65)
+                .addGap(42, 42, 42)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(textMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkBoxStarting)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+                        .addComponent(btnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(49, 49, 49))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addGroup(layout.createSequentialGroup()
                             .addComponent(box20, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -323,37 +473,66 @@ public class GameGUI extends javax.swing.JFrame implements Runnable{
                                 .addComponent(box02, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(162, 162, 162)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(63, Short.MAX_VALUE))
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(textMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(singlePlayer)
+                                .addComponent(withFriend)
+                                .addComponent(internet))
+                            .addGap(76, 76, 76))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
+                            .addComponent(chkBoxStarting)
+                            .addGap(25, 25, 25)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(28, 28, 28)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(52, 52, 52)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(box00, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box01, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box02, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(box10, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box11, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box12, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(box20, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box21, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(box22, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(41, 41, 41)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(chkBoxStarting))
-                .addGap(27, 27, 27)
-                .addComponent(textMessage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(31, 31, 31)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnExit)
-                    .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(52, 52, 52)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(box00, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box01, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box02, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(box10, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box11, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box12, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(withFriend))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(box20, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box21, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(box22, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(internet))
+                        .addGap(41, 41, 41)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(textMessage, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(27, 27, 27)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnExit)
+                            .addComponent(btnReset, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(78, 78, 78)
+                        .addComponent(singlePlayer)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(chkBoxStarting)
+                        .addGap(58, 58, 58)
+                        .addComponent(jLabel2)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -397,12 +576,33 @@ private void box22ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:e
 }//GEN-LAST:event_box22ActionPerformed
 
 private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
-    //gamePlayer.onUpdate("GameGUI-stopGame");
+    System.exit(0);
 }//GEN-LAST:event_btnExitActionPerformed
 
 private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
     resetGame();
 }//GEN-LAST:event_btnResetActionPerformed
+
+private void withFriendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withFriendActionPerformed
+// TODO add your handling code here:
+    if(withFriend.isSelected()) {
+        chkBoxStarting.setEnabled(false);
+    }
+}//GEN-LAST:event_withFriendActionPerformed
+
+private void singlePlayerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_singlePlayerActionPerformed
+// TODO add your handling code here:
+    if(singlePlayer.isSelected()) {
+        chkBoxStarting.setEnabled(true);
+    }
+}//GEN-LAST:event_singlePlayerActionPerformed
+
+private void internetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_internetActionPerformed
+// TODO add your handling code here:
+    if(internet.isSelected()) {
+        chkBoxStarting.setEnabled(false);
+    }
+}//GEN-LAST:event_internetActionPerformed
 
     private void initGUIConfigs() {
         try {
@@ -450,24 +650,25 @@ private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private JTextField box00;
-    private JTextField box01;
-    private JTextField box02;
-    private JTextField box10;
-    private JTextField box11;
-    private JTextField box12;
-    private JTextField box20;
-    private JTextField box21;
-    private JTextField box22;
+    private javax.swing.JTextField box00;
+    private javax.swing.JTextField box01;
+    private javax.swing.JTextField box02;
+    private javax.swing.JTextField box10;
+    private javax.swing.JTextField box11;
+    private javax.swing.JTextField box12;
+    private javax.swing.JTextField box20;
+    private javax.swing.JTextField box21;
+    private javax.swing.JTextField box22;
     private javax.swing.JButton btnExit;
     private javax.swing.JButton btnReset;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox chkBoxStarting;
+    private javax.swing.JRadioButton internet;
     private javax.swing.JLabel jLabel1;
-    private JTextField textMessage;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JRadioButton singlePlayer;
+    private javax.swing.JTextField textMessage;
+    private javax.swing.JRadioButton withFriend;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void run() {
-        setVisible(visibility);
-    }
 }

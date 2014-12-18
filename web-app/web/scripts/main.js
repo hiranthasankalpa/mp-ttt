@@ -67,14 +67,20 @@ var onlinePlayerMove = function (move) {
             nowTrun = 0;
             gameType = 'NotSet';
             clearInterval(interval);
+            $('#turnLabel').text('');
         } else if (freeCells == 0) {
             $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
             nowTrun = 0;
             gameType = 'NotSet';
             clearInterval(interval);
+            $('#turnLabel').text('');
         } else if (turn == player) {
             myTurn = true;
+            $('#waitingForPlayer').modal('hide');
+            $('#turnLabel').text('Your Turn');
+        } else if (turn != player && turn != 0) {
+            $('#turnLabel').text("Opponent's Turn");
         }
 
         var map = board.split(" ");
@@ -89,6 +95,7 @@ var onlinePlayerMove = function (move) {
 
     request.fail(function (jqXHR, textStatus) {
         alert("Oops, error occured!");
+        clearInterval(interval);
         newGame();
     });
 };
@@ -105,7 +112,9 @@ var onlinePlayerConnect = function () {
         player = msg[1];
         var turn = msg[2];
 
-        console.log("id: "+gameId+"\nplayer: "+player+"\nturn: "+turn);
+        if (turn == 0) {
+            $('#waitingForPlayer').modal('toggle');
+        }
         myTurn = true;
 
         interval = setInterval(pollState, 2000);
@@ -126,13 +135,12 @@ var boxClicked = function () {
 
         if (gameType == "SinglePlayer") {
             if (board[box-1] == 0) {
+                $('#turnLabel').text("Opponent's Turn");
                 draw(box, 'x');
                 board[box-1] = -1;
-
                 for(var i=0; i<9; i++){
                     boardStr += board[i] + " ";
                 }
-
                 singlePlayerMove(boardStr);
             } else {
                 myTurn = true;
@@ -143,10 +151,12 @@ var boxClicked = function () {
                     draw(box, 'x');
                     board[box-1] = 1;
                     nowTrun = -1;
+                    $('#turnLabel').text("O's Turn");
                 } else {
                     draw(box, 'o');
                     board[box-1] = -1;
                     nowTrun = 1;
+                    $('#turnLabel').text("X's Turn");
                 }
 
                 for(var j=0; j<9; j++){
@@ -193,11 +203,13 @@ var multiPlayerMove = function (boardStr) {
             }
             nowTrun = 0;
             gameType = 'NotSet';
+            $('#turnLabel').text('');
         } else if (freeCells == 0) {
             $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
             nowTrun = 0;
             gameType = 'NotSet';
+            $('#turnLabel').text('');
         } else {
             myTurn = true;
         }
@@ -219,6 +231,7 @@ var startMultiPlayer = function () {
 var resetBoard = function () {
     board = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     $('.common').hide();
+    $('#turnLabel').text('');
 };
 
 var newGame = function () {
@@ -271,12 +284,15 @@ var singlePlayerMove = function (boardStr) {
                 $('#gameState').modal('toggle');
             }
             gameType = 'NotSet';
+            $('#turnLabel').text('');
         } else if (freeCells == 0) {
             $('#gameStateText').text('Game Drawn!');
             $('#gameState').modal('toggle');
             gameType = 'NotSet';
+            $('#turnLabel').text('');
         } else {
             myTurn = true;
+            $('#turnLabel').text('Your Turn');
         }
     });
 

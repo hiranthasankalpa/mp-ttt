@@ -1,5 +1,9 @@
 package gui;
 
+/**
+ *
+ * @author lahiru
+ */
 public class Node {
     
     int board[][];

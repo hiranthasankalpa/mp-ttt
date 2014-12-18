@@ -38,6 +38,8 @@
         </tr>
     </table>
 
+    <h2 id="turnLabel"></h2>
+
 </div>
 
 <div class="modal fade" data-backdrop="static" data-keyboard="false" id="gamePrompt">
@@ -69,6 +71,21 @@
             <div class="modal-body">
                 <div style="height: 35px">
                     <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4 newGame" data-dismiss="modal">New Game</button><br><br>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" data-backdrop="static" data-keyboard="false" id="waitingForPlayer">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Waiting for another player to connect</h4>
+            </div>
+            <div class="modal-body">
+                <div style="height: 35px">
+                    <button type="button" class="btn btn-default btn-primary col-xs-offset-4 col-xs-4 newGame" data-dismiss="modal">Stop Waiting</button><br><br>
                 </div>
             </div>
         </div>
