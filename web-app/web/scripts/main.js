@@ -58,11 +58,11 @@ var onlinePlayerMove = function (move) {
         if (isAPlayerWon != 0) {
             if (isAPlayerWon == player){
                 $('#gameStateText').text('You Won!');
-                $('#gameState').modal('toggle');
+                $('#gameState').modal('show');
                 clearInterval(interval);
             } else {
                 $('#gameStateText').text('You Lost!');
-                $('#gameState').modal('toggle');
+                $('#gameState').modal('show');
             }
             nowTrun = 0;
             gameType = 'NotSet';
